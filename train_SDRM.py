@@ -7,6 +7,7 @@ import warnings
 warnings.filterwarnings("ignore")
 import math
 import os
+import time
 
 import optuna
 import utilities
@@ -24,11 +25,12 @@ def denoise_add_noise(x, t, pred_noise, z=None):
     return mean + noise
 
 @torch.no_grad()
-def sample_ddpm(n_sample, diff_net, vae_net, diff_latent_dim, noise_divider=1.0, timesteps:str=None, n_timesteps=None):
+def sample_ddpm(n_sample, diff_net, vae_net, diff_latent_dim, noise_divider=1.0, timesteps:str=None, n_timesteps=None, verbose=False):
     # x_T ~ N(0, 1), sample initial noise
     # samples = torch.randn(n_sample, N_ITEMS).to(DEVICE)
     diff_net.eval()
     vae_net.eval()
+    start_time = time.time()
     with torch.no_grad():
 
         # Randomly sample timesteps for each sample
@@ -36,6 +38,7 @@ def sample_ddpm(n_sample, diff_net, vae_net, diff_latent_dim, noise_divider=1.0,
             encode_x = torch.randn(n_sample, diff_latent_dim).to(DEVICE)  # sample from prior, pure gaussian noise
 
             for j in range(n_sample):
+                print(f"Sampling {j+1}/{n_sample}", end='\r') if verbose else None
                 timesteps = np.random.randint(1, n_timesteps)
                 for i in range(timesteps, 0, -1):
 
@@ -56,6 +59,7 @@ def sample_ddpm(n_sample, diff_net, vae_net, diff_latent_dim, noise_divider=1.0,
                 encode_x = denoise_add_noise(encode_x, i, pred_noise_eps, z)
 
             samples = vae_net.decode(encode_x)
+    print(f"Sampling {n_sample}/{n_sample}, Sampling took {np.round((time.time() - start_time) / 60, 2)} minutes") if verbose else None
     return samples
 
 
@@ -71,6 +75,7 @@ def resume(model, filename, VAE_DIR_PATH):
 def checkpoint(model, filename, VAE_DIR_PATH):
     """Save model parameters to file"""
     #print('Saving model parameters to %s' % filename)
+
     try:
         torch.save(model.state_dict(), os.path.normpath(os.path.join(VAE_DIR_PATH, filename)))
     except:
@@ -107,7 +112,10 @@ class SDRM(nn.Module):
         return embedding
 
 
-def train_variational_autoencoder(model, train_data, test_data, epochs, batch_size, lr, early_stop_metric='NDCG@50', VAE_DIR_PATH='./'):
+def train_variational_autoencoder(model, train_data, test_data, epochs, batch_size, lr, early_stop_metric='NDCG@50',
+                                  VAE_DIR_PATH='./', verbose=False):
+    os.makedirs(os.path.normpath(VAE_DIR_PATH), exist_ok=True)  # Make temp dir if exists
+
     anneal_cap = 0.2
     anneal_count = 0.0
     best_metric = -np.inf
@@ -115,7 +123,9 @@ def train_variational_autoencoder(model, train_data, test_data, epochs, batch_si
     early_stop_counter = 0
     optimizer = optim.Adam(model.parameters(), lr=lr)
 
+    start_time = time.time()
     for epoch in range(epochs):
+        training_loss = []
         model.train()
         model.is_training = 1
         train_data = train_data[np.random.permutation(train_data.shape[0])]  # Shuffle data
@@ -134,11 +144,12 @@ def train_variational_autoencoder(model, train_data, test_data, epochs, batch_si
             l2_reg = model.get_l2_reg()
 
             loss = neg_ll + anneal * vae_kl + l2_reg
+            training_loss.append(loss.item())
             loss.backward()
             optimizer.step()
             anneal_count += 1
 
-        #print('Epoch: {}, Loss: {}'.format(epoch, loss.item()))
+        # print('Epoch: {}, Loss: {}'.format(epoch, loss.item())) if verbose else None
         # Evaluate
         model.eval()
         model.is_training = 0
@@ -159,6 +170,7 @@ def train_variational_autoencoder(model, train_data, test_data, epochs, batch_si
                                                    k=int(early_stop_metric.split('@')[1]))
             eval_metric_list.append(eval_metric)
         avg_metric = np.nanmean(np.concatenate(eval_metric_list))
+        print(f"Epoch: {epoch}, Loss: {np.round(np.mean(training_loss), 4)}, {early_stop_metric}: {np.round(avg_metric, 4)}", end='\r') if verbose else None
         if avg_metric > best_metric:
             best_metric = max(best_metric, avg_metric)
             checkpoint(model, f"epoch-{epoch}.pth", VAE_DIR_PATH)
@@ -167,6 +179,8 @@ def train_variational_autoencoder(model, train_data, test_data, epochs, batch_si
         else:
             early_stop_counter += 1
             if early_stop_counter > 20:
+                print(f"MultiVAE++ training complete. Early stopping at epoch {epoch}, "
+                      f"Training took {np.round((time.time() - start_time) / 60, 2)} minutes") if verbose else None
                 break
 
     resume(model, f"epoch-{best_epoch}.pth", VAE_DIR_PATH)
@@ -257,7 +271,7 @@ class VAE(nn.Module):
 def train_SDRM(dl, # Dataloader
                N_ITEMS, VAE_HIDDEN, VAE_LATENT, VAE_BATCH_SIZE, VAE_LR, DIFF_LATENT, N_HIDDEN_MLP_LAYERS, DIFF_LR,
                DIFF_TRAINING_EPOCHS, TIMESTEPS, noise_divider, VAE_DIR_PATH, TRAIN_PARTIAL_VALID_DATA,
-                VALID_DATA, OPTIMIZATION_OBJECTIVE):
+                VALID_DATA, OPTIMIZATION_OBJECTIVE, verbose=False):
     beta1 = 1e-4
     beta2 = 0.02
     #print("training SDRM")
@@ -270,7 +284,7 @@ def train_SDRM(dl, # Dataloader
     # Train the autoencoder
     train_variational_autoencoder(variational_ae, train_data=TRAIN_PARTIAL_VALID_DATA, test_data=VALID_DATA, epochs=500,
                                   batch_size=VAE_BATCH_SIZE, lr=VAE_LR, early_stop_metric=OPTIMIZATION_OBJECTIVE,
-                                  VAE_DIR_PATH=VAE_DIR_PATH)
+                                  VAE_DIR_PATH=VAE_DIR_PATH, verbose=verbose)
 
     assert variational_ae.model_is_trained
     # Freeze weights of vae
@@ -294,7 +308,9 @@ def train_SDRM(dl, # Dataloader
 
     diff_optim = torch.optim.Adam(DIFF.parameters(), lr=DIFF_LR, weight_decay=0.0001, eps=1e-8)  # l2 regularization
 
+    start_time = time.time()
     for ep in range(DIFF_TRAINING_EPOCHS):
+        print(f"SDRM Epoch: {ep + 1}/{DIFF_TRAINING_EPOCHS}", end='\r') if verbose else None
 
         # linearly decay learning rate
         diff_optim.param_groups[0]['lr'] = DIFF_LR * (1 - ep / DIFF_TRAINING_EPOCHS)
@@ -320,4 +336,5 @@ def train_SDRM(dl, # Dataloader
             diff_loss.backward()
             diff_optim.step()
 
+    print(f"SDRM training complete, Training took {np.round((time.time() - start_time) / 60, 2)} minutes") if verbose else None
     return DIFF, variational_ae

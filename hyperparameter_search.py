@@ -970,7 +970,7 @@ if __name__ == '__main__':
     # STATIC VARIABLES
     COLAB = False
     EVAL_MULTIVAE = True
-    ALGORITHM_NAME = 'NeuMF'  # 'SVD', 'MLP', 'NeuMF'
+    ALGORITHM_NAME = 'svd'  # 'SVD', 'MLP', 'NeuMF'
     DATASET_NAME = 'ml-100k'  # 'ADM', 'ML-1M', 'ML-100k', ALB,
     OPTIMIZATION_OBJECTIVE = 'Recall@10'
     OPTIMIZATION_SPARSITY = 'Equal+Original'  # 'Raw+Original', 'Zero+Original', 'Equal+Original', 'All+Original'
