@@ -109,7 +109,7 @@ if __name__ == '__main__':
 
     # Reading args from dictionary not CLI
     arguments = None
-    if True:
+    if False:  # Change to true if you want to load results directly from results_dict
         arguments = results_dict['alb']['neumf'].split()
 
     args = parser.parse_args(args=arguments)
