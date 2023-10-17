@@ -17,6 +17,7 @@
 | MLP latent neurons        | 830      | 40       | 950      | 20       | 400      | 400      | 150      | 340      | 330      | 160      | 20       | 40       |
 | VAE lr                    | 0.0006   | 0.0034   | 0.001    | 0.0042   | 0.001    | 0.004    | 0.0066   | 0.0002   | 0.0009   | 0.0011   | 0.0035   | 0.0014   |
 | Noise variance diminisher | 1        | 1        | 0.2      | 0.5      | 0.2      | 0.3      | 0.5      | 1        | 1        | 0.3      | 0.7      | 1        |
+
 \* Number of hidden layers excludes the input and output layers 
 
 Usage examples:
