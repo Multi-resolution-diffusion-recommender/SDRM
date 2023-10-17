@@ -20,7 +20,9 @@
 
 \* Number of hidden layers excludes the input and output layers 
 
-Usage examples:
+### Usage examples
+
+To recreate the results in the paper, put the best result hyperparamters mentioned in the table in a script similar to below.  
 
 **MovieLens 100k**
 
