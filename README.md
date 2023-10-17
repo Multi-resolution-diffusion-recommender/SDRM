@@ -34,7 +34,7 @@ Augmenting using SVD
 
 No Augmentation using MLP
 
-`--dataset adm --model mlp --augment-training-data --SDRM-batch-size 270 --SDRM-lr 0.000063 --SDRM-epochs 45 --MLP-hidden-layers 1 --SDRM-timesteps 38 --SDRM-noise-variance-diminisher 0.7 --VAE-batch-size 310 --VAE-hidden-layer-neurons 20 --MLP-latent-neurons 20 --VAE-lr 0.0035`
+`python main.py --dataset adm --model mlp --augment-training-data --SDRM-batch-size 270 --SDRM-lr 0.000063 --SDRM-epochs 45 --MLP-hidden-layers 1 --SDRM-timesteps 38 --SDRM-noise-variance-diminisher 0.7 --VAE-batch-size 310 --VAE-hidden-layer-neurons 20 --MLP-latent-neurons 20 --VAE-lr 0.0035`
 
 <hr>
 
