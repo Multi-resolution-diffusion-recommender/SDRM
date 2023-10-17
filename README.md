@@ -1,4 +1,4 @@
-Repository for Multi-Resolution Diffusion for Privacy Sensitive Recommender Systems
+# Repository for Multi-Resolution Diffusion for Privacy Sensitive Recommender Systems
 
 
 
@@ -9,3 +9,6 @@ Usage Example:
 Results can also be reproduced by specifying the arguments with the `result_dict` in `main.py` on line 113
 
 Python version 3.8 or greater was used. 
+
+*Note: This repository contains all the code used to create the results in Multi-Resolution Diffusion for Privacy Sensitive Recommender Systems* 
+
