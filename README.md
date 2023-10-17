@@ -38,5 +38,7 @@ Results can also be reproduced by specifying the arguments with the `result_dict
 
 Python version 3.8 or greater was used. 
 
+hyperparameter_search_results.7z in the `data` folder contains all the raw hyperparameter search results and optuna study objects.
+
 *Note: This repository contains all the code used to create the results in Multi-Resolution Diffusion for Privacy Sensitive Recommender Systems* 
 
