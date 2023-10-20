@@ -62,7 +62,7 @@ results_dict = {
         --VAE-batch-size 540 --VAE-hidden-layer-neurons 430 --MLP-latent-neurons 300 --VAE-lr 0.004"""
     },
     'adm': {
-        'svd': """--dataset adm --model mlp --augment-training-data --SDRM-batch-size 930 --SDRM-lr 0.000001 
+        'svd': """--dataset adm --model svd --augment-training-data --SDRM-batch-size 930 --SDRM-lr 0.000001 
         --SDRM-epochs 60 --MLP-hidden-layers 1 --SDRM-timesteps 163 --SDRM-noise-variance-diminisher 0.3 
         --VAE-batch-size 380 --VAE-hidden-layer-neurons 210 --MLP-latent-neurons 160 --VAE-lr 0.0011""",
         'mlp': """--dataset adm --model mlp --augment-training-data --SDRM-batch-size 270 --SDRM-lr 0.000063 
@@ -110,7 +110,8 @@ if __name__ == '__main__':
     # Reading args from dictionary not CLI
     arguments = None
     if False:  # Change to true if you want to load results directly from results_dict
-        arguments = results_dict['alb']['neumf'].split()
+        arguments = results_dict['alb']['svd'].split()
+        # arguments.remove('--augment-training-data')  # Uncomment to do only synthetic training data
 
     args = parser.parse_args(args=arguments)
 
